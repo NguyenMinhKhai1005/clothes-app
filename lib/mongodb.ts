@@ -1,6 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "";
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose:
+    | {
+        conn: Mongoose | null;
+        promise: Promise<Mongoose> | null;
+      }
+    | undefined;
+}
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");
@@ -12,28 +22,33 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
+async function dbConnect(): Promise<Mongoose> {
+  if (cached!.conn) {
+    return cached!.conn;
   }
 
-  if (!cached.promise) {
+  if (!cached!.promise) {
     const opts = {
       bufferCommands: false,
+      dbName: "clothing_ecommerce",
     };
-    cached.promise = mongoose
-      .connect(MONGODB_URI, opts)
+
+    cached!.promise = mongoose
+      .connect(MONGODB_URI!, opts)
       .then((mongoose) => {
-        console.log("MongoDB connected successfully");
+        console.log(
+          "Connected to MongoDB Atlas - Database: clothing_ecommerce"
+        );
         return mongoose;
       })
-      .catch((error) => {
-        console.error("MongoDB connection error:", error);
-        throw error;
+      .catch((err) => {
+        console.error("MongoDB connection error:", err);
+        throw err;
       });
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+
+  cached!.conn = await cached!.promise;
+  return cached!.conn;
 }
 
 export default dbConnect;
