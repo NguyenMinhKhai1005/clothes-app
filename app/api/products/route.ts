@@ -1,32 +1,49 @@
-import { NextResponse } from "next/server";
-import dbConnect from "../../../lib/mongodb";
-import Product from "../../../models/Product";
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "@/lib/mongodb";
+import Product from "@/models/Product";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  await dbConnect();
+
   try {
-    await dbConnect();
-    const products = await Product.find({});
-    return NextResponse.json(products);
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search") || "";
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "6", 10);
+    const skip = (page - 1) * limit;
+
+    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+
+    const [products, total] = await Promise.all([
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit), // sắp xếp theo createdAt giảm dần
+      Product.countDocuments(query),
+    ]);
+
+    return NextResponse.json({ products, total });
   } catch (error) {
-    console.error("Error in GET /api/products:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Error fetching products";
+    console.error("Error in GET /api/products:", errorMessage);
+    return NextResponse.json({ products: [], total: 0, error: errorMessage }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
+  await dbConnect();
+
   try {
-    await dbConnect();
-    const body = await request.json();
-    const product = await Product.create(body);
+    const body = await req.json();
+    console.log("Received data for creating product:", body);
+
+    if (!body.name || !body.description || !body.price || isNaN(body.price)) {
+      return NextResponse.json({ error: "Invalid input: name, description, and price are required, and price must be a number" }, { status: 400 });
+    }
+
+    const product = await Product.create({ ...body, createdAt: new Date() }); 
+    console.log("Product created successfully:", product);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
-    console.error("Error in POST /api/products:", error);
-    return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 400 }
-    );
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error in POST /api/products:", errorMessage);
+    return NextResponse.json({ error: errorMessage || "Error creating product" }, { status: 500 });
   }
 }

@@ -5,7 +5,7 @@ import Product from "@/models/Product";
 export async function GET(req: NextRequest) {
   await dbConnect();
 
-  const id = req.nextUrl.pathname.split("/").pop(); // Lấy id từ URL
+  const id = req.nextUrl.pathname.split("/").pop(); 
 
   try {
     const product = await Product.findById(id);
@@ -15,10 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(product);
   } catch (error) {
     console.error("Error in GET /api/products/[id]:", error);
-    return NextResponse.json(
-      { error: "Error fetching product" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error fetching product" }, { status: 500 });
   }
 }
 
@@ -39,10 +36,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(product);
   } catch (error) {
     console.error("Error in PUT /api/products/[id]:", error);
-    return NextResponse.json(
-      { error: "Error updating product" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Error updating product" }, { status: 400 });
   }
 }
 
@@ -59,9 +53,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ message: "Product deleted" });
   } catch (error) {
     console.error("Error in DELETE /api/products/[id]:", error);
-    return NextResponse.json(
-      { error: "Error deleting product" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error deleting product" }, { status: 500 });
   }
 }
