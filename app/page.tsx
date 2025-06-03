@@ -24,11 +24,9 @@ export default function Home() {
                 return res.json();
             })
             .then((data) => {
-                // Kiểm tra nếu data là một mảng thì mới setProducts
                 if (Array.isArray(data)) {
                     setProducts(data);
                 } else if (Array.isArray(data.products)) {
-                    // Trường hợp API trả về { products: [...] }
                     setProducts(data.products);
                 } else {
                     console.error("Invalid API response format:", data);

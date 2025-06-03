@@ -12,6 +12,8 @@ type Product = {
     image: string;
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ProductDetail() {
     const { id } = useParams();
     const [product, setProduct] = useState<Product | null>(null);
